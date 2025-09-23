@@ -1,0 +1,6 @@
+id,name,description,url,author,tags
+1,Python基礎講座,Pythonプログラミングの基本的な概念を学べる入門講座です。変数、関数、クラスなどを丁寧に解説します。,https://example.com/python-basic,田中太郎,"Python,入門,プログラミング"
+2,機械学習入門,scikit-learnを使った機械学習の基礎を学習できます。分類、回帰、クラスタリングの手法を実践的に習得できます。,https://example.com/ml-intro,佐藤花子,"機械学習,scikit-learn,AI"
+3,ウェブ開発実践,FlaskとDjangoを使用したウェブアプリケーション開発を学びます。フロントエンドとバックエンドの連携も含みます。,https://example.com/web-dev,鈴木一郎,"Flask,Django,ウェブ開発"
+4,データベース設計,SQLを使用したデータベース設計と操作を学習します。正規化、インデックス、パフォーマンス最適化についても扱います。,https://example.com/database,山田花子,"SQL,データベース,設計"
+5,API開発,RESTful APIの設計と実装について学習します。FastAPIとPostmanを使用した実践的な開発手法を習得できます。,https://example.com/api-dev,高橋次郎,"API,REST,FastAPI"
