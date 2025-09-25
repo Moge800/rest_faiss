@@ -84,7 +84,7 @@ class FaissSearch:
             combined_text = " ".join([str(row[col]) for col in self.text_columns if pd.notna(row[col])])
             texts.append(combined_text)
 
-        vectors = self.model.encode(texts)
+        vectors = self.model.encode(texts, show_progress_bar=False)
 
         # FAISSインデックスを構築
         dimension = vectors.shape[1]
@@ -95,7 +95,7 @@ class FaissSearch:
 
     def search(self, query_text: str, top_k: int) -> List[Dict[str, Any]]:
         # クエリテキストをベクトル化
-        query_vector = self.model.encode([query_text])
+        query_vector = self.model.encode([query_text], show_progress_bar=False)
 
         # FAISS検索実行
         distances, indices = self.index.search(query_vector.astype("float32"), top_k)
