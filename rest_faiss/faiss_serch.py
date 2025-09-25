@@ -2,6 +2,10 @@ import faiss
 from typing import List, Dict, Any
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+import logging
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 
 class ModelManager:
@@ -18,9 +22,9 @@ class ModelManager:
     def get_model(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         if self._model is None:
-            print(f"モデルを初期化中: {model_name}")
+            logger.info(f"モデルを初期化中: {model_name}")
             self._model = SentenceTransformer(model_name)
-            print("モデル初期化完了")
+            logger.info("モデル初期化完了")
         return self._model
 
 
@@ -68,7 +72,7 @@ class FaissSearch:
 
         # テキストカラムを自動検出
         self.text_columns = self.detect_text_columns(self.data)
-        print(f"検出されたテキストカラム: {self.text_columns}")
+        logger.info(f"検出されたテキストカラム: {self.text_columns}")
 
         # テキストカラムを結合してベクトル化
         texts = []
@@ -82,6 +86,8 @@ class FaissSearch:
         dimension = vectors.shape[1]
         self.index = faiss.IndexFlatL2(dimension)
         self.index.add(vectors.astype("float32"))
+
+        logger.info(f"FAISSインデックスが作成されました。データ数: {self.index.ntotal}, 次元数: {dimension}")
 
     def search(self, query_text: str, top_k: int) -> List[Dict[str, Any]]:
         # クエリテキストをベクトル化
@@ -111,7 +117,7 @@ class FaissSearch:
                         else:
                             result[col] = str(value) if pd.notna(value) else ""
                     except Exception as e:
-                        print(f"カラム '{col}' の処理でエラー: {e}")
+                        logger.error(f"カラム '{col}' の処理でエラー: {e}")
                         result[col] = ""
 
                 results.append(result)
