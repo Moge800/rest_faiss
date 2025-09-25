@@ -93,7 +93,7 @@ class FaissSearch:
 
         logger.info(f"FAISSインデックスが作成されました。データ数: {self.index.ntotal}, 次元数: {dimension}")
 
-    def search(self, query_text: str, top_k: int) -> List[Dict[str, Any]]:
+    def search(self, query_text: str, top_k: int, threshold: float = 0.5) -> List[Dict[str, Any]]:
         # クエリテキストをベクトル化
         query_vector = self.model.encode([query_text], show_progress_bar=False)
 
@@ -134,3 +134,22 @@ class FaissSearch:
                 results.append(result)
 
         return results
+
+    def search_with_fallback(
+        self, query_text: str, top_k: int = 3, threshold: float = 0.5, min_k: int = 3
+    ) -> List[Dict[str, Any]]:
+        """類似度スコアの閾値を用いた検索。閾値以下の場合はmin_kになるまでしきい値を下げ繰り返し再検索"""
+        results = self.search(query_text, top_k, threshold)
+
+        while len(results) < min_k:
+            logger.info(f"resultがmin_k[{min_k}]に満たないため、thresholdを[{threshold/2}]に下げて再検索します。")
+            threshold = threshold / 2
+            results = self.search(query_text, min_k, threshold)
+            if len(results) >= min_k:
+                break
+            if threshold < 0.01:  # あまりに低い閾値は無意味なので打ち切り
+                logger.info("閾値が非常に低いため、これ以上の再検索を中止します。")
+                break
+
+        # 最終的な結果をtop_k件に制限
+        return results[:top_k]
