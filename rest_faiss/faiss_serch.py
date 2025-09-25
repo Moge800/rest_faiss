@@ -23,7 +23,11 @@ class ModelManager:
         """モデルをキャッシュから取得、初回のみダウンロード"""
         if self._model is None:
             logger.info(f"モデルを初期化中: {model_name}")
-            self._model = SentenceTransformer(model_name)
+            try:
+                self._model = SentenceTransformer(model_name)
+            except Exception as e:
+                logger.error(f"モデルの初期化に失敗しました: {e}")
+                raise e
             logger.info("モデル初期化完了")
         return self._model
 
