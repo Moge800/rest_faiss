@@ -2,19 +2,19 @@
 
 ## モデルのダウンロードとキャッシュ
 
-### 初回実行時
+### 初回実行時のログ出力
 ```
-モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
+INFO:rest_faiss.faiss_serch:モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
 Downloading (…)_Pooling/config.json: 100%|██| 190/190 [00:00<?, ?B/s]
 Downloading (…)7e55ad/.gitattributes: 100%|██| 1.18k/1.18k [00:00<?, ?B/s]
 ...
-モデル初期化完了
+INFO:rest_faiss.faiss_serch:モデル初期化完了
 ```
 
-### 2回目以降
+### 2回目以降のログ出力
 ```
-モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
-モデル初期化完了  # ダウンロードなし、キャッシュから読み込み
+INFO:rest_faiss.faiss_serch:モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
+INFO:rest_faiss.faiss_serch:モデル初期化完了  # ダウンロードなし、キャッシュから読み込み
 ```
 
 ## キャッシュ場所
@@ -47,9 +47,13 @@ class ModelManager:
     def get_model(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         if self._model is None:
-            print(f"モデルを初期化中: {model_name}")
-            self._model = SentenceTransformer(model_name)
-            print("モデル初期化完了")
+            logger.info(f"モデルを初期化中: {model_name}")
+            try:
+                self._model = SentenceTransformer(model_name)
+                logger.info("モデル初期化完了")
+            except Exception as e:
+                logger.error(f"モデルの初期化に失敗しました: {e}")
+                raise e
         return self._model
 ```
 

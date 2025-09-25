@@ -89,16 +89,32 @@ python tests/test_dynamic_columns.py
 
 **パラメータ:**
 - `text` (string, 必須): 検索対象のテキスト
-- `n` (integer, 任意): 返却する上位結果の数（デフォルト：3、最大：100）
+- `top_k` (integer, 任意): 返却する上位結果の数（デフォルト：3、最大：100）
+- `threshold` (float, 任意): 類似度スコアの閾値（デフォルト：0.5、0.0〜1.0の範囲）
+- `min_k` (integer, 任意): 閾値未満の場合に再検索する最小件数（デフォルト：3、最大：100）
+- `fallback` (boolean, 任意): 閾値未満の場合に再検索を行うかどうか（デフォルト：false）
 
 **重要な注意事項:**
 
-- `n`で指定した件数よりもデータベース内のレコード数が少ない場合、実際のデータ件数分のみ返却されます
+- `top_k`で指定した件数よりもデータベース内のレコード数が少ない場合、実際のデータ件数分のみ返却されます
+- `threshold`を設定することで、指定した類似度スコア以上の結果のみを返却できます
+- `fallback`を`true`にすると、閾値を満たす結果が`min_k`件未満の場合、閾値を無視して`min_k`件を返却します
 - レスポンスには要求件数、データベース総件数、実際の返却件数の情報が含まれます
 
 **使用例:**
+
 ```bash
-curl "http://localhost:8000/get_knowledge?text=FastAPIの使い方&n=3"
+curl "http://localhost:8000/get_knowledge?text=FastAPIの使い方&top_k=3"
+```
+
+**詳細検索例:**
+
+```bash
+# 類似度スコア0.7以上の結果のみを取得
+curl "http://localhost:8000/get_knowledge?text=FastAPIの使い方&top_k=5&threshold=0.7"
+
+# フォールバック機能を使用（閾値未満でも最低3件は取得）
+curl "http://localhost:8000/get_knowledge?text=FastAPIの使い方&top_k=5&threshold=0.8&min_k=3&fallback=true"
 ```
 
 **レスポンス例:**
@@ -145,6 +161,7 @@ API情報とエンドポイント一覧
 ## 自動ドキュメント
 
 サーバー起動後、以下のURLでSwagger UIが利用できます：
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -166,7 +183,8 @@ API情報とエンドポイント一覧
 │   └── test_dynamic_columns.py # 動的カラムテストスクリプト
 ├── docs/
 │   ├── dynamic_columns.md  # 動的カラム対応の説明
-│   └── model_cache.md     # モデルキャッシュの説明
+│   ├── model_cache.md     # モデルキャッシュの説明
+│   └── advanced_search.md # 高度な検索機能の説明
 ├── requirements.txt       # Python依存関係（詳細版）
 ├── LICENSE               # MITライセンス
 └── README.md            # このファイル
