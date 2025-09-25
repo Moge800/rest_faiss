@@ -10,9 +10,7 @@ from .faiss_serch import FaissSearch
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="FAISS Knowledge Search API", description="LLMのRAGのためのFAISS検索API", version="1.0.0")
-
-# 固有名詞正規化辞書をロード
+# 固有名詞正規化辞書
 noun_normalizer = {}
 
 
