@@ -81,16 +81,22 @@ async def root():
 @app.get("/get_knowledge")
 async def get_knowledge(
     text: str = Query(..., description="検索対象のテキスト"),
-    n: int = Query(
+    top_k: int = Query(
         3, description="返却する上位結果の数（デフォルト3、最大100。ただし実際のデータ件数が上限）", ge=1, le=100
     ),
+    threshold: float = Query(0.5, description="類似度スコアの閾値（デフォルト0.5、0.0〜1.0の範囲）", ge=0.0, le=1.0),
+    min_k: int = Query(3, description="閾値未満の場合に再検索する最小件数（デフォルト3）", ge=1, le=100),
+    fallback: bool = Query(False, description="閾値未満の場合に再検索を行うかどうか"),
 ) -> Dict[str, Any]:
     """
     知識ベースから類似したコンテンツを検索する
 
     Args:
         text: 検索クエリ
-        n: 返却する結果数（デフォルト3、最大100。実際のデータ件数を超える場合は全件返却）
+        top_k: 返却する結果数（デフォルト3、最大100。実際のデータ件数を超える場合は全件返却）
+        threshold: 類似度スコアの閾値（デフォルト0.5、0.0〜1.0の範囲）
+        min_k: 閾値未満の場合に再検索する最小件数（デフォルト3、最大100）
+        fallback: 閾値未満の場合に再検索を行うかどうか,（デフォルトFalse）
 
     Returns:
         検索結果のJSON（要求件数、データ総件数、実際の返却件数を含む）
@@ -105,27 +111,33 @@ async def get_knowledge(
     try:
         # クエリを正規化
         normalized_query = normalize_query(text.strip())
-        logger.info(f"検索クエリ: '{text}' -> 正規化後: '{normalized_query}'")
+        if text != normalized_query:
+            logger.info(f"検索クエリ: '{text}' -> 正規化後: '{normalized_query}'")
+        else:
+            logger.info(f"検索クエリ: '{text}'")
 
         # データベース内の総件数を取得
         total_data_count = len(faiss_search.data)
 
         # FAISS検索実行（データ件数以上は要求できない）
-        actual_n = min(n, total_data_count)
-        results = faiss_search.search(normalized_query, actual_n)
+        actual_n = min(top_k, total_data_count)
+        if fallback:
+            results = faiss_search.search_with_fallback(normalized_query, actual_n, threshold, min_k)
+        else:
+            results = faiss_search.search(normalized_query, actual_n, threshold)
 
         response = {
             "query": text,
             "normalized_query": normalized_query,
-            "requested_count": n,
+            "requested_count": top_k,
             "total_data_count": total_data_count,
             "actual_returned_count": len(results),
             "results": results,
         }
 
-        if n > total_data_count:
+        if top_k > total_data_count:
             logger.info(
-                f"検索完了: 要求件数{n}件に対してデータベース内の総件数{total_data_count}件のため、{len(results)}件を返却"
+                f"検索完了: 要求件数{top_k}件に対してデータベース内の総件数{total_data_count}件のため、{len(results)}件を返却"
             )
         else:
             logger.info(f"検索完了: {len(results)}件の結果を返却")
