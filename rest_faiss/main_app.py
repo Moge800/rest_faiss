@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from contextlib import asynccontextmanager
 from typing import Dict, Any
 import pandas as pd
 import logging
@@ -38,9 +39,10 @@ def normalize_query(text: str) -> str:
 faiss_search = None
 
 
-@app.on_event("startup")
-async def startup_event():
-    """アプリケーション起動時の初期化処理"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """アプリケーションのライフサイクル管理"""
+    # アプリケーション起動時の初期化処理
     global faiss_search
 
     # 固有名詞辞書をロード
@@ -56,6 +58,16 @@ async def startup_event():
             logger.error(f"知識データファイルが見つかりません: {knowledge_path}")
     except Exception as e:
         logger.error(f"FAISSインデックスの構築に失敗: {e}")
+
+    yield  # アプリケーションの実行
+
+    # アプリケーション終了時のクリーンアップ処理（必要に応じて）
+    logger.info("アプリケーションを終了します")
+
+
+app = FastAPI(
+    title="FAISS Knowledge Search API", description="LLMのRAGのためのFAISS検索API", version="1.0.0", lifespan=lifespan
+)
 
 
 @app.get("/")
