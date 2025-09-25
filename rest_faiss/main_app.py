@@ -74,7 +74,7 @@ async def root():
     return {
         "message": "FAISS Knowledge Search API",
         "version": "1.0.0",
-        "endpoints": ["/get_knowledge?text=検索文字列&n=3"],
+        "endpoints": ["/get_knowledge?text=検索文字列&n=3&threshold=0.5&min_k=3&fallback=false"],
     }
 
 
