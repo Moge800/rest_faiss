@@ -106,8 +106,15 @@ class FaissSearch:
             if idx != -1:  # 有効なインデックスの場合
                 row = self.data.iloc[idx]
 
+                # 距離を類似度スコアに変換
+                similarity_score = 1 / (1 + distance)
+
+                # しきい値未満であればスキップ
+                if similarity_score < threshold:
+                    continue
+
                 # 基本的な結果構造
-                result = {"rank": i + 1, "similarity_score": float(1 / (1 + distance))}  # 距離を類似度スコアに変換
+                result = {"rank": i + 1, "similarity_score": float(similarity_score)}
 
                 # 各カラムを動的に追加
                 for col in self.data.columns:
