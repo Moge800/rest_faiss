@@ -22,6 +22,7 @@ class ModelManager:
     # "paraphrase-multilingual-MiniLM-L12-v2"
     def get_model(self, model_name: str = "intfloat/multilingual-e5-large"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
+        self.model_name = model_name
         if self._model is None:
             logger.info(f"モデルを初期化中: {model_name}")
             try:
@@ -38,6 +39,7 @@ class FaissSearch:
         # シングルトンのモデルマネージャーを使用
         self.model_manager = ModelManager()
         self.model = self.model_manager.get_model()
+        self.model_name = self.model_manager.model_name
         self.data = None
         self.index = None
         self.text_columns = []  # ベクトル化に使用するテキストカラム

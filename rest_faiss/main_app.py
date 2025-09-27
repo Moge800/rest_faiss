@@ -155,10 +155,11 @@ async def search_knowledge(
 async def health_check():
     """ヘルスチェックエンドポイント"""
     return {
-        "status": "healthy",
+        "status": "HAPPY",
         "faiss_ready": faiss_search is not None,
         "noun_normalizer_loaded": len(noun_normalizer) > 0,
         "total_data_count": len(faiss_search.data) if faiss_search else 0,
+        "model_name": faiss_search.model_name if faiss_search else None,
     }
 
 
