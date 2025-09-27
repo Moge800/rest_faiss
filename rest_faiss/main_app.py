@@ -74,7 +74,9 @@ async def root():
     return {
         "message": "FAISS Knowledge Search API",
         "version": "1.0.0",
-        "endpoints": ["/get_knowledge?text=検索文字列&n=3&threshold=0.5&min_k=3&fallback=false"],
+        "endpoints": ["/search_knowledge", "/health"],
+        "usage": "POST /search_knowledge with parameters: text (str), top_k (int), threshold (float), min_k (int), fallback (bool)",
+        "example": {"text": "AIについての知識を検索", "top_k": 5, "threshold": 0.7, "min_k": 3, "fallback": "true"},
     }
 
 
