@@ -19,7 +19,8 @@ class ModelManager:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_model(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
+    # "paraphrase-multilingual-MiniLM-L12-v2"
+    def get_model(self, model_name: str = "intfloat/multilingual-e5-large"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         if self._model is None:
             logger.info(f"モデルを初期化中: {model_name}")
