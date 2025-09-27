@@ -4,7 +4,7 @@
 
 ### 初回実行時のログ出力
 ```
-INFO:rest_faiss.faiss_serch:モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
+INFO:rest_faiss.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
 Downloading (…)_Pooling/config.json: 100%|██| 190/190 [00:00<?, ?B/s]
 Downloading (…)7e55ad/.gitattributes: 100%|██| 1.18k/1.18k [00:00<?, ?B/s]
 ...
@@ -13,7 +13,7 @@ INFO:rest_faiss.faiss_serch:モデル初期化完了
 
 ### 2回目以降のログ出力
 ```
-INFO:rest_faiss.faiss_serch:モデルを初期化中: paraphrase-multilingual-MiniLM-L12-v2
+INFO:rest_faiss.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
 INFO:rest_faiss.faiss_serch:モデル初期化完了  # ダウンロードなし、キャッシュから読み込み
 ```
 
@@ -21,12 +21,12 @@ INFO:rest_faiss.faiss_serch:モデル初期化完了  # ダウンロードなし
 
 ### Windows
 ```
-C:\Users\[ユーザー名]\.cache\huggingface\hub\models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2\
+C:\Users\[ユーザー名]\.cache\huggingface\hub\models--intfloat--multilingual-e5-large\
 ```
 
 ### Linux/macOS
 ```
-~/.cache/huggingface/hub/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2/
+~/.cache/huggingface/hub/models--intfloat--multilingual-e5-large/
 ```
 
 ## パフォーマンス最適化
@@ -44,7 +44,7 @@ class ModelManager:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def get_model(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
+    def get_model(self, model_name: str = "intfloat/multilingual-e5-large"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         if self._model is None:
             logger.info(f"モデルを初期化中: {model_name}")
@@ -78,11 +78,11 @@ search3 = FaissSearch("data3.csv")  # モデル再利用、初期化なし
 
 ## モデルサイズと性能
 
-### paraphrase-multilingual-MiniLM-L12-v2
-- **サイズ**: 約471MB
+### intfloat/multilingual-e5-large
+- **サイズ**: 約2.5GB
 - **対応言語**: 多言語（日本語含む）
-- **ベクトル次元**: 384次元
-- **特徴**: 軽量で高性能
+- **ベクトル次元**: 1024次元
+- **特徴**: 高精度で日本語検索に最適化、検索タスクに特化
 
 ### 他のモデルオプション
 
