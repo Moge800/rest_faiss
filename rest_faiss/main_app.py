@@ -78,8 +78,8 @@ async def root():
     }
 
 
-@app.get("/get_knowledge")
-async def get_knowledge(
+@app.post("/search_knowledge")
+async def search_knowledge(
     text: str = Query(..., description="検索対象のテキスト"),
     top_k: int = Query(
         3, description="返却する上位結果の数（デフォルト3、最大100。ただし実際のデータ件数が上限）", ge=1, le=100
