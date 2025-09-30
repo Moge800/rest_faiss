@@ -29,11 +29,11 @@ def start_server():
         import uvicorn
         from rest_faiss.main_app import app
 
-        print(f"サーバーは http://localhost:{PORT} で起動します")
-        print(f"Swagger UI: http://localhost:{PORT}/docs")
+        print(f"サーバーは http://{HOST}:{PORT} で起動します")
+        print(f"Swagger UI: http://{HOST}:{PORT}/docs")
         print("停止するには Ctrl+C を押してください\n")
 
-        uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")
+        uvicorn.run(app, host=HOST, port=PORT, log_level="info")
 
     except ImportError as e:
         print(f"エラー: 必要なパッケージが見つかりません - {e}")
@@ -60,4 +60,5 @@ def main():
 
 if __name__ == "__main__":
     PORT = 8000
+    HOST = "0.0.0.0"
     main()
