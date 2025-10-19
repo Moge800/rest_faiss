@@ -3,9 +3,17 @@ from typing import List, Dict, Any
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 import logging
+import jaconv
+import re
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+def hankaku_katakana_to_zenkaku(text: str):
+    if isinstance(text, str):
+        return re.sub(r"[ｦ-']+", lambda m: jaconv.h2z(m.group(), kana=True, ascii=False, digit=False), text)
+    return text
 
 
 class ModelManager:
@@ -20,7 +28,8 @@ class ModelManager:
         return cls._instance
 
     # "paraphrase-multilingual-MiniLM-L12-v2"
-    def get_model(self, model_name: str = "intfloat/multilingual-e5-large"):
+    # "intfloat/multilingual-e5-large"
+    def get_model(self, model_name: str = "intfloat/e5-base-v2"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         self.model_name = model_name
         if self._model is None:
@@ -75,7 +84,8 @@ class FaissSearch:
 
     def make_index(self, csv_path: str):
         # CSVデータを読み込み
-        self.data = pd.read_csv(csv_path)
+        self.data: pd.DataFrame = pd.read_csv(csv_path)
+        self.data = self.data.applymap(hankaku_katakana_to_zenkaku)
 
         # テキストカラムを自動検出
         self.text_columns = self.detect_text_columns(self.data)
