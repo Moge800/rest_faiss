@@ -34,7 +34,7 @@ def test_n100():
     print("2. n=100 検索テスト")
     try:
         query = "FAISS"
-        response = requests.get(f"{base_url}/get_knowledge", params={"text": query, "n": 100}, timeout=10)
+        response = requests.post(f"{base_url}/knowledge/search", params={"text": query, "n": 100}, timeout=10)
         print(f"ステータス: {response.status_code}")
 
         if response.status_code == 200:
