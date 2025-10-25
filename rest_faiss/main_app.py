@@ -4,7 +4,7 @@ from typing import Dict, Any
 import pandas as pd
 import logging
 import os
-from .faiss_serch import FaissSearch
+from .faiss_serch import FaissSearch, normalize_katakana_width
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 
     # FAISSインデックスを構築
     try:
-        knowledge_path = "DATA/knowledge_data.csv"
+        knowledge_path = "DATA/なれっじ.csv"
         if os.path.exists(knowledge_path):
             faiss_search = FaissSearch(knowledge_path)
             logger.info("FAISSインデックスの構築が完了しました")
@@ -80,7 +80,7 @@ async def root():
     }
 
 
-@app.post("/search_knowledge")
+@app.post("/knowledge/search")
 async def search_knowledge(
     text: str = Query(..., description="検索対象のテキスト"),
     top_k: int = Query(
@@ -112,7 +112,8 @@ async def search_knowledge(
 
     try:
         # クエリを正規化
-        normalized_query = normalize_query(text.strip())
+        temp = normalize_katakana_width(text)
+        normalized_query = normalize_query(temp.strip())
         if text != normalized_query:
             logger.info(f"検索クエリ: '{text}' -> 正規化後: '{normalized_query}'")
         else:
