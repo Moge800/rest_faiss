@@ -3,9 +3,17 @@ from typing import List, Dict, Any
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 import logging
+import jaconv
+import re
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+
+def normalize_katakana_width(text: str):
+    if isinstance(text, str):
+        return re.sub(r"[ｦ-ﾟ]+", lambda m: jaconv.h2z(m.group(), kana=True, ascii=False, digit=False), text)
+    return text
 
 
 class ModelManager:
@@ -20,6 +28,9 @@ class ModelManager:
         return cls._instance
 
     # "paraphrase-multilingual-MiniLM-L12-v2"
+    # "intfloat/multilingual-e5-large"
+    #  "intfloat/e5-base-v2"
+    #  "sonoisa/sentence-bert-base-ja-mean-tokens-v2"
     def get_model(self, model_name: str = "intfloat/multilingual-e5-large"):
         """モデルをキャッシュから取得、初回のみダウンロード"""
         self.model_name = model_name
@@ -74,67 +85,47 @@ class FaissSearch:
         return text_columns
 
     def make_index(self, csv_path: str):
-        # CSVデータを読み込み
-        self.data = pd.read_csv(csv_path)
+        try:
+            self.data = pd.read_csv(csv_path)
+            self.text_columns = self.detect_text_columns(self.data)
+            logger.info(f"検出されたテキストカラム: {self.text_columns}")
 
-        # テキストカラムを自動検出
-        self.text_columns = self.detect_text_columns(self.data)
-        logger.info(f"検出されたテキストカラム: {self.text_columns}")
+            def preprocess_row(row):
+                return " ".join(
+                    [normalize_katakana_width(str(row[col])) for col in self.text_columns if pd.notna(row[col])]
+                )
 
-        # テキストカラムを結合してベクトル化
-        texts = []
-        for _, row in self.data.iterrows():
-            combined_text = " ".join([str(row[col]) for col in self.text_columns if pd.notna(row[col])])
-            texts.append(combined_text)
+            texts = [preprocess_row(row) for _, row in self.data.iterrows()]
 
-        vectors = self.model.encode(texts, show_progress_bar=False)
+            if "e5" in self.model_name:
+                texts = [f"passage: {t}" for t in texts]
 
-        # FAISSインデックスを構築
-        dimension = vectors.shape[1]
-        self.index = faiss.IndexFlatL2(dimension)
-        self.index.add(vectors.astype("float32"))
+            vectors = self.model.encode(texts, show_progress_bar=False, normalize_embeddings=True)
+            self.index = faiss.IndexFlatIP(vectors.shape[1])
+            self.index.add(vectors.astype("float32"))
 
-        logger.info(f"FAISSインデックスが作成されました。データ数: {self.index.ntotal}, 次元数: {dimension}")
+            logger.info(f"FAISSインデックス作成完了: {self.index.ntotal}件, 次元数: {vectors.shape[1]}")
+        except Exception as e:
+            logger.error(f"make_index失敗: {e}")
+            raise e
 
     def search(self, query_text: str, top_k: int, threshold: float = 0.5) -> List[Dict[str, Any]]:
-        # クエリテキストをベクトル化
-        query_vector = self.model.encode([query_text], show_progress_bar=False)
+        query_text = normalize_katakana_width(query_text)
+        if "e5" in self.model_name:
+            query_text = f"query: {query_text}"
 
-        # FAISS検索実行
+        query_vector = self.model.encode([query_text], show_progress_bar=False, normalize_embeddings=True)
         distances, indices = self.index.search(query_vector.astype("float32"), top_k)
 
-        # 結果を構造化して返す
         results = []
-        for i, (idx, distance) in enumerate(zip(indices[0], distances[0])):
-            if idx != -1:  # 有効なインデックスの場合
-                row = self.data.iloc[idx]
-
-                # 距離を類似度スコアに変換
-                similarity_score = 1 / (1 + distance)
-
-                # しきい値未満であればスキップ
-                if similarity_score < threshold:
-                    continue
-
-                # 基本的な結果構造
-                result = {"rank": i + 1, "similarity_score": float(similarity_score)}
-
-                # 各カラムを動的に追加
-                for col in self.data.columns:
-                    try:
-                        value = row[col]
-                        # 数値型の場合は適切に変換
-                        if pd.api.types.is_integer_dtype(self.data[col]):
-                            result[col] = int(value)
-                        elif pd.api.types.is_float_dtype(self.data[col]):
-                            result[col] = float(value)
-                        else:
-                            result[col] = str(value) if pd.notna(value) else ""
-                    except Exception as e:
-                        logger.error(f"カラム '{col}' の処理でエラー: {e}")
-                        result[col] = ""
-
-                results.append(result)
+        for i, (idx, score) in enumerate(zip(indices[0], distances[0])):
+            if idx == -1 or score < threshold:
+                continue
+            row = self.data.iloc[idx]
+            result = {"rank": i + 1, "similarity_score": float(score)}
+            for col in self.data.columns:
+                result[col] = str(row[col]) if pd.notna(row[col]) else ""
+            results.append(result)
 
         return results
 
