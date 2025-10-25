@@ -37,7 +37,7 @@ def test_api():
     for i, (query, n) in enumerate(test_queries, 1):
         print(f"3.{i} 検索テスト: '{query}'")
         try:
-            response = requests.get(f"{base_url}/get_knowledge", params={"text": query, "n": n})
+            response = requests.post(f"{base_url}/knowledge/search", params={"text": query, "n": n})
             print(f"ステータス: {response.status_code}")
 
             if response.status_code == 200:
