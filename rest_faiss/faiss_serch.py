@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 import logging
 import jaconv
 import re
+from dataclasses import dataclass
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -14,6 +15,13 @@ def normalize_katakana_width(text: str):
     if isinstance(text, str):
         return re.sub(r"[ｦ-ﾟ]+", lambda m: jaconv.h2z(m.group(), kana=True, ascii=False, digit=False), text)
     return text
+
+
+@dataclass
+class IndexData:
+    data: pd.DataFrame
+    index: faiss.IndexFlatIP
+    text_columns: List[str]
 
 
 class ModelManager:
@@ -51,10 +59,10 @@ class FaissSearch:
         self.model_manager = ModelManager()
         self.model = self.model_manager.get_model()
         self.model_name = self.model_manager.model_name
-        self.data = None
-        self.index = None
-        self.text_columns = []  # ベクトル化に使用するテキストカラム
-        self.make_index(csv_path)
+        self.index_data: IndexData = self.make_index(csv_path)
+        self.data = self.index_data.data
+        self.index = self.index_data.index
+        self.text_columns = self.index_data.text_columns
 
     def detect_text_columns(self, df: pd.DataFrame) -> List[str]:
         """テキストカラムを自動検出"""
@@ -84,27 +92,28 @@ class FaissSearch:
 
         return text_columns
 
-    def make_index(self, csv_path: str):
+    def make_index(self, csv_path: str) -> IndexData:
         try:
-            self.data = pd.read_csv(csv_path)
-            self.text_columns = self.detect_text_columns(self.data)
-            logger.info(f"検出されたテキストカラム: {self.text_columns}")
+            data = pd.read_csv(csv_path)
+            text_columns = self.detect_text_columns(data)
+            logger.info(f"検出されたテキストカラム: {text_columns}")
 
             def preprocess_row(row):
-                return " ".join(
-                    [normalize_katakana_width(str(row[col])) for col in self.text_columns if pd.notna(row[col])]
-                )
+                return " ".join([normalize_katakana_width(str(row[col])) for col in text_columns if pd.notna(row[col])])
 
-            texts = [preprocess_row(row) for _, row in self.data.iterrows()]
+            texts = [preprocess_row(row) for _, row in data.iterrows()]
 
             if "e5" in self.model_name:
                 texts = [f"passage: {t}" for t in texts]
 
             vectors = self.model.encode(texts, show_progress_bar=False, normalize_embeddings=True)
-            self.index = faiss.IndexFlatIP(vectors.shape[1])
-            self.index.add(vectors.astype("float32"))
+            index = faiss.IndexFlatIP(vectors.shape[1])
+            index.add(vectors.astype("float32"))
 
-            logger.info(f"FAISSインデックス作成完了: {self.index.ntotal}件, 次元数: {vectors.shape[1]}")
+            logger.info(f"FAISSインデックス作成完了: {index.ntotal}件, 次元数: {vectors.shape[1]}")
+
+            return IndexData(data=data, index=index, text_columns=text_columns)
+
         except Exception as e:
             logger.error(f"make_index失敗: {e}")
             raise e
