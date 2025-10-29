@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 def normalize_katakana_width(text: str):
     if isinstance(text, str):
-        return re.sub(r"[ｦ-ﾟ]+", lambda m: jaconv.h2z(m.group(), kana=True, ascii=False, digit=False), text)
+        return re.sub(
+            r"[ｦ-ﾟ]+",
+            lambda m: jaconv.h2z(m.group(), kana=True, ascii=False, digit=False),
+            text,
+        )
     return text
 
 
@@ -69,7 +73,15 @@ class FaissSearch:
         text_columns = []
 
         # 優先順位でテキストカラムを検出
-        priority_columns = ["title", "content", "name", "description", "text", "summary", "body"]
+        priority_columns = [
+            "title",
+            "content",
+            "name",
+            "description",
+            "text",
+            "summary",
+            "body",
+        ]
 
         for col in priority_columns:
             if col in df.columns:
@@ -78,7 +90,13 @@ class FaissSearch:
         # 優先カラムが見つからない場合、文字列型のカラムを自動検出
         if not text_columns:
             for col in df.columns:
-                if df[col].dtype == "object" and col.lower() not in ["id", "category", "tag", "url", "author"]:
+                if df[col].dtype == "object" and col.lower() not in [
+                    "id",
+                    "category",
+                    "tag",
+                    "url",
+                    "author",
+                ]:
                     text_columns.append(col)
 
         # 最低限1つのテキストカラムが必要
@@ -99,18 +117,28 @@ class FaissSearch:
             logger.info(f"検出されたテキストカラム: {text_columns}")
 
             def preprocess_row(row):
-                return " ".join([normalize_katakana_width(str(row[col])) for col in text_columns if pd.notna(row[col])])
+                return " ".join(
+                    [
+                        normalize_katakana_width(str(row[col]))
+                        for col in text_columns
+                        if pd.notna(row[col])
+                    ]
+                )
 
             texts = [preprocess_row(row) for _, row in data.iterrows()]
 
             if "e5" in self.model_name:
                 texts = [f"passage: {t}" for t in texts]
 
-            vectors = self.model.encode(texts, show_progress_bar=False, normalize_embeddings=True)
+            vectors = self.model.encode(
+                texts, show_progress_bar=False, normalize_embeddings=True
+            )
             index = faiss.IndexFlatIP(vectors.shape[1])
             index.add(vectors.astype("float32"))
 
-            logger.info(f"FAISSインデックス作成完了: {index.ntotal}件, 次元数: {vectors.shape[1]}")
+            logger.info(
+                f"FAISSインデックス作成完了: {index.ntotal}件, 次元数: {vectors.shape[1]}"
+            )
 
             return IndexData(data=data, index=index, text_columns=text_columns)
 
@@ -118,12 +146,16 @@ class FaissSearch:
             logger.error(f"make_index失敗: {e}")
             raise e
 
-    def search(self, query_text: str, top_k: int, threshold: float = 0.5) -> List[Dict[str, Any]]:
+    def search(
+        self, query_text: str, top_k: int, threshold: float = 0.5
+    ) -> List[Dict[str, Any]]:
         query_text = normalize_katakana_width(query_text)
         if "e5" in self.model_name:
             query_text = f"query: {query_text}"
 
-        query_vector = self.model.encode([query_text], show_progress_bar=False, normalize_embeddings=True)
+        query_vector = self.model.encode(
+            [query_text], show_progress_bar=False, normalize_embeddings=True
+        )
         distances, indices = self.index.search(query_vector.astype("float32"), top_k)
 
         results = []
@@ -145,7 +177,9 @@ class FaissSearch:
         results = self.search(query_text, top_k, threshold)
 
         while len(results) < min_k:
-            logger.info(f"resultがmin_k[{min_k}]に満たないため、thresholdを[{threshold/2}]に下げて再検索します。")
+            logger.info(
+                f"resultがmin_k[{min_k}]に満たないため、thresholdを[{threshold/2}]に下げて再検索します。"
+            )
             threshold = threshold / 2
             results = self.search(query_text, min_k, threshold)
             if len(results) >= min_k:

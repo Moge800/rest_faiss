@@ -64,7 +64,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FAISS Knowledge Search API", description="LLMのRAGのためのFAISS検索API", version="1.0.0", lifespan=lifespan
+    title="FAISS Knowledge Search API",
+    description="LLMのRAGのためのFAISS検索API",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -76,7 +79,13 @@ async def root():
         "version": "1.0.0",
         "endpoints": ["/search_knowledge", "/health"],
         "usage": "POST /search_knowledge with parameters: text (str), top_k (int), threshold (float), min_k (int), fallback (bool)",
-        "example": {"text": "AIについての知識を検索", "top_k": 5, "threshold": 0.7, "min_k": 3, "fallback": "true"},
+        "example": {
+            "text": "AIについての知識を検索",
+            "top_k": 5,
+            "threshold": 0.7,
+            "min_k": 3,
+            "fallback": "true",
+        },
     }
 
 
@@ -84,10 +93,20 @@ async def root():
 async def search_knowledge(
     text: str = Query(..., description="検索対象のテキスト"),
     top_k: int = Query(
-        3, description="返却する上位結果の数（デフォルト3、最大100。ただし実際のデータ件数が上限）", ge=1, le=100
+        3,
+        description="返却する上位結果の数（デフォルト3、最大100。ただし実際のデータ件数が上限）",
+        ge=1,
+        le=100,
     ),
-    threshold: float = Query(0.5, description="類似度スコアの閾値（デフォルト0.5、0.0〜1.0の範囲）", ge=0.0, le=1.0),
-    min_k: int = Query(3, description="閾値未満の場合に再検索する最小件数（デフォルト3）", ge=1, le=100),
+    threshold: float = Query(
+        0.5,
+        description="類似度スコアの閾値（デフォルト0.5、0.0〜1.0の範囲）",
+        ge=0.0,
+        le=1.0,
+    ),
+    min_k: int = Query(
+        3, description="閾値未満の場合に再検索する最小件数（デフォルト3）", ge=1, le=100
+    ),
     fallback: bool = Query(False, description="閾値未満の場合に再検索を行うかどうか"),
 ) -> Dict[str, Any]:
     """
@@ -105,7 +124,9 @@ async def search_knowledge(
     """
 
     if faiss_search is None:
-        raise HTTPException(status_code=500, detail="FAISSインデックスが初期化されていません")
+        raise HTTPException(
+            status_code=500, detail="FAISSインデックスが初期化されていません"
+        )
 
     if not text or not text.strip():
         raise HTTPException(status_code=400, detail="検索テキストが空です")
@@ -125,7 +146,9 @@ async def search_knowledge(
         # FAISS検索実行（データ件数以上は要求できない）
         actual_n = min(top_k, total_data_count)
         if fallback:
-            results = faiss_search.search_with_fallback(normalized_query, actual_n, threshold, min_k)
+            results = faiss_search.search_with_fallback(
+                normalized_query, actual_n, threshold, min_k
+            )
         else:
             results = faiss_search.search(normalized_query, actual_n, threshold)
 
@@ -149,7 +172,9 @@ async def search_knowledge(
 
     except Exception as e:
         logger.error(f"検索エラー: {e}")
-        raise HTTPException(status_code=500, detail=f"検索処理でエラーが発生しました: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"検索処理でエラーが発生しました: {str(e)}"
+        )
 
 
 @app.get("/health")
