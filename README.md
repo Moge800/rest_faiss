@@ -169,7 +169,7 @@ API情報とエンドポイント一覧
 
 ```text
 ├── start_server.py         # サーバー起動スクリプト
-├── rest_faiss/
+├── src/
 │   ├── __init__.py
 │   ├── main_app.py        # FastAPI アプリケーション
 │   └── faiss_serch.py     # FAISS検索クラス

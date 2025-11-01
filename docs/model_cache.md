@@ -4,17 +4,17 @@
 
 ### 初回実行時のログ出力
 ```
-INFO:rest_faiss.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
+INFO:src.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
 Downloading (…)_Pooling/config.json: 100%|██| 190/190 [00:00<?, ?B/s]
 Downloading (…)7e55ad/.gitattributes: 100%|██| 1.18k/1.18k [00:00<?, ?B/s]
 ...
-INFO:rest_faiss.faiss_serch:モデル初期化完了
+INFO:src.faiss_serch:モデル初期化完了
 ```
 
 ### 2回目以降のログ出力
 ```
-INFO:rest_faiss.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
-INFO:rest_faiss.faiss_serch:モデル初期化完了  # ダウンロードなし、キャッシュから読み込み
+INFO:src.faiss_serch:モデルを初期化中: intfloat/multilingual-e5-large
+INFO:src.faiss_serch:モデル初期化完了  # ダウンロードなし、キャッシュから読み込み
 ```
 
 ## キャッシュ場所

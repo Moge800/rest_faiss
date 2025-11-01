@@ -36,7 +36,7 @@
 検出されたテキストカラムはログに出力されます：
 
 ```
-INFO:rest_faiss.faiss_serch:検出されたテキストカラム: ['title', 'content']
+INFO:src.faiss_serch:検出されたテキストカラム: ['title', 'content']
 ```
 
 ## 対応例

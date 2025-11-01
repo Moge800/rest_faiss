@@ -8,7 +8,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from rest_faiss.faiss_serch import FaissSearch
+from src.faiss_serch import FaissSearch
 
 
 def test_different_csv_structures():
@@ -18,7 +18,10 @@ def test_different_csv_structures():
 
     csv_files = [
         ("DATA/knowledge_data.csv", "標準構造 (id, title, content, category)"),
-        ("DATA/test_knowledge.csv", "拡張構造 (id, name, description, url, author, tags)"),
+        (
+            "DATA/test_knowledge.csv",
+            "拡張構造 (id, name, description, url, author, tags)",
+        ),
     ]
 
     for csv_path, description in csv_files:
@@ -46,7 +49,9 @@ def test_different_csv_structures():
 
                 if results:
                     for result in results:
-                        print(f"  ランク {result['rank']}: スコア {result['similarity_score']:.4f}")
+                        print(
+                            f"  ランク {result['rank']}: スコア {result['similarity_score']:.4f}"
+                        )
                         # 動的にカラムを表示
                         for key, value in result.items():
                             if key not in ["rank", "similarity_score"]:

@@ -27,7 +27,7 @@ def start_server():
     print("\n=== APIサーバーを起動中 ===")
     try:
         import uvicorn
-        from rest_faiss.main_app import app
+        from src.main_app import app
 
         print(f"サーバーは http://{HOST}:{PORT} で起動します")
         print(f"Swagger UI: http://{HOST}:{PORT}/docs")

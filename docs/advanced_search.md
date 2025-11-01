@@ -53,8 +53,8 @@
 ### フォールバックのログ例
 
 ```
-INFO:rest_faiss.faiss_serch:resultがmin_k[3]に満たないため、thresholdを[0.4]に下げて再検索します。
-INFO:rest_faiss.faiss_serch:resultがmin_k[3]に満たないため、thresholdを[0.2]に下げて再検索します。
+INFO:src.faiss_serch:resultがmin_k[3]に満たないため、thresholdを[0.4]に下げて再検索します。
+INFO:src.faiss_serch:resultがmin_k[3]に満たないため、thresholdを[0.2]に下げて再検索します。
 ```
 
 ## 実用的な使用パターン
